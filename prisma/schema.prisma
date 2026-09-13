@@ -1,0 +1,91 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model NGO {
+  id                    String       @id @default(cuid())
+  name                  String
+  website               String?
+  description           String
+  country               String
+  operating_regions     String       // JSON string array e.g. ["Kenya", "East Africa"]
+  themes                String       // JSON string array e.g. ["Education", "Gender Equality"]
+  beneficiaries         String       // JSON string array e.g. ["Girls", "Youth"]
+  annual_budget         Float?
+  requested_funding_min Float?
+  requested_funding_max Float?
+  years_operating       Int?
+  registration_status   String       // e.g. "Registered Non-Profit", "CBO", etc.
+  created_at            DateTime     @default(now())
+
+  matches               GrantMatch[]
+  search_runs           SearchRun[]
+
+  @@map("ngos")
+}
+
+model Grant {
+  id                         String       @id @default(cuid())
+  title                      String
+  funder                     String
+  url                        String       @unique
+  description                String
+  funding_min                Float?
+  funding_max                Float?
+  currency                   String       @default("USD")
+  deadline                   DateTime?
+  eligible_regions           String       // JSON string array e.g. ["Sub-Saharan Africa", "Global"]
+  eligible_org_types         String       // JSON string array e.g. ["NGO", "Non-Profit"]
+  themes                     String       // JSON string array e.g. ["Climate", "Education"]
+  beneficiaries              String       // JSON string array e.g. ["Indigenous", "Women"]
+  requirements               String       // JSON string array e.g. ["Audited financial statements"]
+  operating_history_required Int?         // Minimum years operating required
+  source_domain              String
+  discovered_at              DateTime     @default(now())
+  last_checked_at            DateTime     @default(now())
+  status                     String       @default("active") // "active", "expired", "verified", "needs_verification", "demo"
+
+  matches                    GrantMatch[]
+
+  @@map("grants")
+}
+
+model GrantMatch {
+  id                String   @id @default(cuid())
+  ngo_id            String
+  grant_id          String
+  total_score       Float
+  theme_score       Float
+  geography_score   Float
+  eligibility_score Float
+  funding_score     Float
+  beneficiary_score Float
+  explanation       String
+  risks             String   // JSON string array of potential blockers/caveats
+  recommendation    String
+  created_at        DateTime @default(now())
+
+  ngo               NGO      @relation(fields: [ngo_id], references: [id], onDelete: Cascade)
+  grant             Grant    @relation(fields: [grant_id], references: [id], onDelete: Cascade)
+
+  @@unique([ngo_id, grant_id])
+  @@map("grant_matches")
+}
+
+model SearchRun {
+  id             String   @id @default(cuid())
+  ngo_id         String?
+  query          String
+  provider       String
+  number_results Int
+  created_at     DateTime @default(now())
+
+  ngo            NGO?     @relation(fields: [ngo_id], references: [id], onDelete: SetNull)
+
+  @@map("search_runs")
+}
