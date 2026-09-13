@@ -4,14 +4,14 @@
   "description": "Open-source AI-powered grant discovery and matching platform for NGOs",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "prisma generate && next build",
-    "start": "next start",
+    "dev": "node scripts/prepare-prisma.js && next dev",
+    "build": "node scripts/prepare-prisma.js && prisma generate && next build",
+    "start": "node scripts/prepare-prisma.js && next start",
     "lint": "next lint",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:seed": "node -r ts-node/register prisma/seed.ts",
-    "test": "jest --passWithNoTests"
+    "db:generate": "node scripts/prepare-prisma.js && prisma generate",
+    "db:push": "node scripts/prepare-prisma.js && prisma db push",
+    "db:seed": "node scripts/prepare-prisma.js && npx ts-node -O '{\"module\":\"commonjs\"}' prisma/seed.ts",
+    "test": "node scripts/prepare-prisma.js && jest --passWithNoTests"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.1",
