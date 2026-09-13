@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node scripts/prepare-prisma.js && next dev",
     "build": "node scripts/prepare-prisma.js && prisma generate && next build",
-    "start": "node scripts/prepare-prisma.js && next start",
+    "start": "node scripts/prepare-prisma.js && prisma db push && npx ts-node -O '{\"module\":\"commonjs\"}' prisma/seed.ts && next start",
     "lint": "next lint",
     "db:generate": "node scripts/prepare-prisma.js && prisma generate",
     "db:push": "node scripts/prepare-prisma.js && prisma db push",
