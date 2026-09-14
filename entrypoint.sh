@@ -8,6 +8,7 @@ echo "==> Target port: ${PORT:-3000}"
 # Configure schema based on DATABASE_URL
 echo "==> Configuring Prisma schema provider..."
 node scripts/prepare-prisma.js
+npx prisma generate
 
 # If DATABASE_URL is set, push schema and seed
 if [ -n "$DATABASE_URL" ]; then

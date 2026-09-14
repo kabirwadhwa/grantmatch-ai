@@ -15,8 +15,9 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/placeholder"
 
-RUN node scripts/prepare-prisma.js && npx prisma generate && npm run build
+RUN mkdir -p public && node scripts/prepare-prisma.js && npx prisma generate && npm run build
 
 # Production runner
 FROM base AS runner
