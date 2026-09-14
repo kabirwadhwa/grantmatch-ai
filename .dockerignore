@@ -1,9 +1,11 @@
-Dockerfile
 .dockerignore
 node_modules
 npm-debug.log
 .next
 .git
 .gitignore
+.env
+.env*.local
 dev.db
 dev.db-journal
+*.log
