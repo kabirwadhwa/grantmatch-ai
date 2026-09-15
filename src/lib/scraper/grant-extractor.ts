@@ -1,6 +1,7 @@
 import { GrantOpportunity } from "../../types";
 import { llmService } from "../llm/provider";
 import { cleanHtmlToText } from "./website-parser";
+import { getCanonicalFunderName } from "../utils/funder-canonical";
 
 /**
  * Deterministic heuristic extractor for grant pages when LLM is unavailable.
@@ -18,16 +19,14 @@ export function extractGrantHeuristically(html: string, url: string): GrantOppor
   }
 
   // Funder extraction from domain or title
-  let funder = "Institutional Funder";
   let sourceDomain = "";
   try {
     const urlObj = new URL(url);
     sourceDomain = urlObj.hostname.replace("www.", "");
-    const parts = sourceDomain.split(".");
-    funder = parts[0].charAt(0).toUpperCase() + parts[0].slice(1) + " Foundation";
   } catch {
     sourceDomain = "funder.org";
   }
+  const funder = getCanonicalFunderName(null, sourceDomain, url);
 
   const cleanTitle = title.split(/[-|–:]/)[0]?.trim() || "Grant Opportunity";
 
@@ -163,7 +162,7 @@ Return ONLY a JSON object:
 
     return {
       title: parsed.title || title || "Grant Opportunity",
-      funder: parsed.funder || sourceDomain,
+      funder: getCanonicalFunderName(parsed.funder, sourceDomain, url),
       url,
       description: parsed.description || metaDescription || "Grant funding opportunity.",
       funding_min: typeof parsed.funding_min === "number" ? parsed.funding_min : null,

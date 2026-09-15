@@ -18,9 +18,13 @@ import {
   Info,
   ShieldCheck,
   Globe2,
+  CheckCircle2,
 } from "lucide-react";
 import { MatchEvaluation, NGOProfile } from "@/types";
 import GrantDetailModal from "@/components/GrantDetailModal";
+import { getCanonicalFunderName } from "@/lib/utils/funder-canonical";
+import { getGrantStatusInfo, formatDeadlineDisplay, formatFundingRange, formatVerifiedDate } from "@/lib/utils/grant-status";
+import { scoreTo5 } from "@/components/MatchExplanationBlock";
 
 export default function ResultsPage() {
   const [ngoProfile, setNgoProfile] = useState<NGOProfile | null>(null);
@@ -340,42 +344,49 @@ export default function ResultsPage() {
             const grant = match.grant;
             if (!grant) return null;
 
+            const funderName = getCanonicalFunderName(grant.funder, grant.source_domain, grant.url);
+            const statusInfo = getGrantStatusInfo(grant);
+            const criteria = [
+              { label: "Mission alignment", val: scoreTo5(match.breakdown.thematic) },
+              { label: "Geography", val: scoreTo5(match.breakdown.geographic) },
+              { label: "Organisation type", val: scoreTo5(match.breakdown.eligibility) },
+              { label: "Funding fit", val: scoreTo5(match.breakdown.funding_size) },
+              { label: "Programme alignment", val: scoreTo5(match.breakdown.beneficiary) },
+            ];
+
             return (
               <div
                 key={grant.id || grant.url}
                 onClick={() => setSelectedMatch(match)}
-                className="group relative cursor-pointer rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-blue-400 hover:shadow-md"
+                className="group relative cursor-pointer rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-slate-300 hover:shadow-md space-y-4"
               >
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                  {/* Left info */}
+                {/* Header row */}
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-slate-100 pb-4">
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-800">
-                        <Building2 className="h-3 w-3 text-slate-500" />
-                        {grant.funder}
+                      <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-800">
+                        <Building2 className="h-3.5 w-3.5 text-slate-500" />
+                        {funderName}
                       </span>
 
                       <span className="text-xs text-slate-400">•</span>
                       <span className="text-xs text-slate-500">{grant.source_domain}</span>
 
-                      {grant.status === "verified" && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-                          <ShieldCheck className="h-3 w-3" />
-                          Verified
-                        </span>
-                      )}
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${statusInfo.badgeClass}`}>
+                        {statusInfo.label}
+                      </span>
+
+                      <span className="text-[11px] text-slate-400">
+                        {formatVerifiedDate(grant.last_checked_at || grant.discovered_at)}
+                      </span>
                     </div>
 
-                    <h3 className="mt-2 text-lg font-bold text-slate-900 group-hover:text-blue-600 transition">
+                    <h3 className="mt-2.5 text-lg font-bold text-slate-900 group-hover:text-blue-600 transition">
                       {grant.title}
                     </h3>
 
-                    <p className="mt-2 text-sm text-slate-600 line-clamp-2 leading-relaxed">
-                      {match.explanation}
-                    </p>
-
-                    {/* Sector Pills */}
-                    <div className="mt-3 flex flex-wrap gap-1.5">
+                    {/* Themes & regions */}
+                    <div className="mt-2.5 flex flex-wrap gap-1.5">
                       {grant.themes.slice(0, 3).map((theme, idx) => (
                         <span
                           key={idx}
@@ -395,55 +406,104 @@ export default function ResultsPage() {
                     </div>
                   </div>
 
-                  {/* Right Score & Summary Badge */}
-                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 border-slate-100 pt-3 sm:pt-0">
+                  {/* Score pill */}
+                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start">
                     <div
-                      className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 font-extrabold text-lg sm:text-xl shadow-xs ring-1 ${getScoreBadgeClass(
+                      className={`inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-1.5 font-extrabold text-lg sm:text-xl shadow-xs ring-1 ${getScoreBadgeClass(
                         match.total_score
                       )}`}
                     >
                       <span>{match.total_score}%</span>
-                      <span className="text-[10px] font-bold uppercase tracking-wider">Match</span>
-                    </div>
-
-                    <div className="mt-2 text-right hidden sm:block">
-                      <span className="text-xs font-semibold text-slate-500 block">
-                        {grant.funding_min && grant.funding_max
-                          ? `$${grant.funding_min.toLocaleString()} - $${grant.funding_max.toLocaleString()}`
-                          : grant.funding_max
-                          ? `Up to $${grant.funding_max.toLocaleString()}`
-                          : "Flexible funding"}
-                      </span>
-                      <span className="text-[11px] text-slate-400 block mt-0.5">
-                        {grant.deadline
-                          ? `Due ${new Date(grant.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
-                          : "Rolling deadline"}
-                      </span>
+                      <span className="text-[11px] font-bold uppercase tracking-wider">MATCH</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Score breakdown mini bar */}
-                <div className="mt-4 border-t border-slate-100 pt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span>Theme: <strong className="text-slate-800">{match.breakdown.thematic}%</strong></span>
-                    <span>Geo: <strong className="text-slate-800">{match.breakdown.geographic}%</strong></span>
-                    <span>Eligibility: <strong className="text-slate-800">{match.breakdown.eligibility}%</strong></span>
-                    <span>Budget: <strong className="text-slate-800">{match.breakdown.funding_size}%</strong></span>
-                    <span>Beneficiary: <strong className="text-slate-800">{match.breakdown.beneficiary}%</strong></span>
+                {/* 5-Factor Alignment Scale */}
+                <div className="bg-slate-50/80 rounded-lg p-3.5 border border-slate-100 text-xs">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    Criteria Alignment Breakdown (5-Point Scale)
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2">
+                    {criteria.map((item) => (
+                      <div key={item.label} className="flex items-center justify-between">
+                        <span className="text-slate-600 font-medium">{item.label}</span>
+                        <div className="flex items-center gap-1.5">
+                          <div className="flex gap-1">
+                            {[1, 2, 3, 4, 5].map((idx) => (
+                              <div
+                                key={idx}
+                                className={`h-1.5 w-2.5 rounded-xs ${
+                                  idx <= item.val ? "bg-slate-800" : "bg-slate-200"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="font-bold text-slate-900 w-5 text-right">{item.val}/5</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* WHY THIS MATCHES */}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-900">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Why this matches</span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-700 leading-relaxed bg-emerald-50/40 border border-emerald-100 rounded-lg p-3">
+                    {match.explanation}
+                  </p>
+                </div>
+
+                {/* WATCH OUT (if compliance caveats or risks exist) */}
+                {match.risks && match.risks.length > 0 && (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-900">
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Watch out</span>
+                    </div>
+                    <div className="rounded-lg bg-amber-50/60 border border-amber-200/80 p-3">
+                      <ul className="text-xs text-amber-900 space-y-1 list-disc list-inside leading-relaxed">
+                        {match.risks.map((risk, idx) => (
+                          <li key={idx} className="text-amber-800 font-medium">
+                            {risk}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                {/* Card Action Footer */}
+                <div className="border-t border-slate-100 pt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                    <span>
+                      Deadline: <strong className="text-slate-800">{formatDeadlineDisplay(grant.deadline)}</strong>
+                    </span>
+                    <span>
+                      Funding: <strong className="text-slate-800">{formatFundingRange(grant.funding_min, grant.funding_max, grant.currency)}</strong>
+                    </span>
                   </div>
 
-                  {match.risks && match.risks.length > 0 && (
-                    <div className="flex items-center gap-1 text-amber-700 font-medium">
-                      <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
-                      <span>{match.risks.length} compliance caveat(s)</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-3">
+                    <a
+                      href={grant.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+                    >
+                      <span>Official Source</span>
+                      <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                    </a>
 
-                  <span className="inline-flex items-center gap-1 text-blue-600 font-semibold group-hover:translate-x-0.5 transition">
-                    <span>View criteria & details</span>
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </span>
+                    <span className="inline-flex items-center gap-1 text-blue-600 font-semibold group-hover:translate-x-0.5 transition">
+                      <span>Full Criteria & Guidance</span>
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </span>
+                  </div>
                 </div>
               </div>
             );

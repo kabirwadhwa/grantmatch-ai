@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowRight, Search, ShieldCheck, CheckCircle2, Award, Sparkles, Building2, Globe2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { getCanonicalFunderName } from "@/lib/utils/funder-canonical";
+import { getGrantStatusInfo, formatDeadlineDisplay, formatFundingRange } from "@/lib/utils/grant-status";
 
 export const revalidate = 60; // ISR cache for 60s
 
@@ -13,8 +15,9 @@ export default async function HomePage() {
     });
     sampleGrants = raw.map((g) => ({
       ...g,
-      eligible_regions: JSON.parse(g.eligible_regions),
-      themes: JSON.parse(g.themes),
+      eligible_regions: g.eligible_regions ? JSON.parse(g.eligible_regions) : [],
+      themes: g.themes ? JSON.parse(g.themes) : [],
+      requirements: g.requirements ? JSON.parse(g.requirements) : [],
     }));
   } catch {
     sampleGrants = [];
@@ -146,68 +149,66 @@ export default async function HomePage() {
             </div>
 
             <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
-              {sampleGrants.map((grant) => (
-                <div
-                  key={grant.id}
-                  className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/50 p-6 transition hover:border-slate-300 hover:bg-white hover:shadow-md"
-                >
-                  <div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="inline-flex items-center gap-1 rounded bg-slate-200/70 px-2 py-0.5 text-xs font-semibold text-slate-800">
-                        <Building2 className="h-3 w-3 text-slate-500" />
-                        {grant.funder}
-                      </span>
-                      <span className="text-xs font-medium text-slate-500">
-                        {grant.deadline
-                          ? `Due ${new Date(grant.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
-                          : "Rolling deadline"}
-                      </span>
-                    </div>
+              {sampleGrants.map((grant) => {
+                const funderName = getCanonicalFunderName(grant.funder, grant.source_domain, grant.url);
+                const statusInfo = getGrantStatusInfo(grant);
 
-                    <h3 className="mt-3 text-lg font-bold text-slate-900">
-                      {grant.title}
-                    </h3>
-
-                    <p className="mt-2 text-sm text-slate-600 line-clamp-2">
-                      {grant.description}
-                    </p>
-
-                    <div className="mt-4 flex flex-wrap gap-1.5">
-                      {grant.themes.slice(0, 3).map((theme: string, idx: number) => (
-                        <span
-                          key={idx}
-                          className="rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700"
-                        >
-                          {theme}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mt-6 flex items-center justify-between border-t border-slate-200/80 pt-4 text-xs font-medium text-slate-600">
+                return (
+                  <div
+                    key={grant.id}
+                    className="flex flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/50 p-6 transition hover:border-slate-300 hover:bg-white hover:shadow-md"
+                  >
                     <div>
-                      {grant.funding_min && grant.funding_max ? (
-                        <span>
-                          ${grant.funding_min.toLocaleString()} – ${grant.funding_max.toLocaleString()}
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="inline-flex items-center gap-1.5 rounded-md bg-slate-200/70 px-2.5 py-1 text-xs font-semibold text-slate-800">
+                          <Building2 className="h-3.5 w-3.5 text-slate-500" />
+                          {funderName}
                         </span>
-                      ) : grant.funding_max ? (
-                        <span>Up to ${grant.funding_max.toLocaleString()}</span>
-                      ) : (
-                        <span>Flexible funding</span>
-                      )}
+
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border ${statusInfo.badgeClass}`}>
+                          {statusInfo.label}
+                        </span>
+                      </div>
+
+                      <h3 className="mt-3 text-lg font-bold text-slate-900">
+                        {grant.title}
+                      </h3>
+
+                      <p className="mt-2 text-sm text-slate-600 line-clamp-2">
+                        {grant.description}
+                      </p>
+
+                      <div className="mt-4 flex flex-wrap gap-1.5">
+                        {grant.themes.slice(0, 3).map((theme: string, idx: number) => (
+                          <span
+                            key={idx}
+                            className="rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700"
+                          >
+                            {theme}
+                          </span>
+                        ))}
+                      </div>
                     </div>
 
-                    <a
-                      href={grant.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-700 hover:underline"
-                    >
-                      Official Source →
-                    </a>
+                    <div className="mt-6 flex items-center justify-between border-t border-slate-200/80 pt-4 text-xs font-medium text-slate-600">
+                      <div>
+                        <span>{formatFundingRange(grant.funding_min, grant.funding_max, grant.currency)}</span>
+                        <span className="text-slate-400 mx-2">•</span>
+                        <span>{formatDeadlineDisplay(grant.deadline)}</span>
+                      </div>
+
+                      <a
+                        href={grant.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 font-semibold hover:text-blue-700 hover:underline"
+                      >
+                        Official Source →
+                      </a>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>

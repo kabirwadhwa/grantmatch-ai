@@ -12,9 +12,18 @@ export default function Footer() {
               <span className="rounded bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">Open Public Good</span>
             </div>
             <p className="mt-3 max-w-md text-sm text-slate-500 leading-relaxed">
-              An open-source, AI-powered grant discovery and matching engine for non-governmental organizations,
-              civil society institutions, and grassroots initiatives worldwide.
+              GrantMatch AI is an open-source public-interest tool built by Capacité. It discovers, screens eligibility, and explains funding matches for non-governmental organizations worldwide.
             </p>
+            <div className="mt-3">
+              <a
+                href="https://capacite-production.up.railway.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-xs font-semibold text-slate-700 hover:text-blue-600 transition"
+              >
+                ← Back to Capacité
+              </a>
+            </div>
             <div className="mt-4 flex items-center gap-2 text-xs text-slate-500">
               <ShieldAlert className="h-4 w-4 text-amber-500" />
               <span>Anti-hallucination guarantee: Every grant record links to its original source.</span>
