@@ -8,13 +8,13 @@ export default function Navbar() {
         {/* Brand */}
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2.5 transition hover:opacity-90">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-white shadow-sm ring-1 ring-slate-800">
-              <Compass className="h-5 w-5 text-blue-400" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-[#315C4C] text-white shadow-xs">
+              <Compass className="h-5 w-5 text-white" />
             </div>
             <div>
               <div className="flex items-center">
                 <span className="text-lg font-bold tracking-tight text-slate-900">
-                  GrantMatch <span className="font-semibold text-blue-600">AI</span>
+                  GrantMatch <span className="font-semibold text-[#315C4C]">AI</span>
                 </span>
               </div>
               <div className="text-[11px] font-medium text-slate-500 leading-none mt-0.5">
@@ -23,7 +23,7 @@ export default function Navbar() {
                   href="https://capacite-production.up.railway.app/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-semibold text-slate-700 hover:text-blue-600 underline underline-offset-2"
+                  className="font-semibold text-slate-700 hover:text-[#315C4C] underline underline-offset-2"
                 >
                   Capacité
                 </a>
