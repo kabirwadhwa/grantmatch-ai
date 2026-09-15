@@ -4,7 +4,21 @@ import { prisma } from "@/lib/prisma";
 import { getCanonicalFunderName } from "@/lib/utils/funder-canonical";
 import { getGrantStatusInfo, formatDeadlineDisplay, formatFundingRange } from "@/lib/utils/grant-status";
 
-export const revalidate = 60; // ISR cache for 60s
+export const dynamic = "force-dynamic";
+
+function safeParse(val: any): string[] {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [val];
+    }
+  }
+  return [];
+}
 
 export default async function HomePage() {
   let sampleGrants: any[] = [];
@@ -15,9 +29,9 @@ export default async function HomePage() {
     });
     sampleGrants = raw.map((g) => ({
       ...g,
-      eligible_regions: g.eligible_regions ? JSON.parse(g.eligible_regions) : [],
-      themes: g.themes ? JSON.parse(g.themes) : [],
-      requirements: g.requirements ? JSON.parse(g.requirements) : [],
+      eligible_regions: safeParse(g.eligible_regions),
+      themes: safeParse(g.themes),
+      requirements: safeParse(g.requirements),
     }));
   } catch {
     sampleGrants = [];

@@ -4,7 +4,21 @@ import Link from "next/link";
 import { getCanonicalFunderName } from "@/lib/utils/funder-canonical";
 import { getGrantStatusInfo, formatDeadlineDisplay, formatFundingRange, formatVerifiedDate } from "@/lib/utils/grant-status";
 
-export const revalidate = 60; // Revalidate every 60s
+export const dynamic = "force-dynamic";
+
+function safeParse(val: any): string[] {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [val];
+    }
+  }
+  return [];
+}
 
 export default async function DirectoryPage() {
   let grants: any[] = [];
@@ -15,11 +29,11 @@ export default async function DirectoryPage() {
     });
     grants = raw.map((g) => ({
       ...g,
-      eligible_regions: JSON.parse(g.eligible_regions),
-      eligible_org_types: JSON.parse(g.eligible_org_types),
-      themes: JSON.parse(g.themes),
-      beneficiaries: JSON.parse(g.beneficiaries),
-      requirements: JSON.parse(g.requirements),
+      eligible_regions: safeParse(g.eligible_regions),
+      eligible_org_types: safeParse(g.eligible_org_types),
+      themes: safeParse(g.themes),
+      beneficiaries: safeParse(g.beneficiaries),
+      requirements: safeParse(g.requirements),
     }));
   } catch (err) {
     grants = [];
